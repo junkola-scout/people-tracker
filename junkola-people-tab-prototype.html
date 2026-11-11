@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Junkola People Tab Prototype</title>
+<style>
+:root{--bg:#151619;--panel:#1b1c20;--line:#34363c;--line2:#2a2c31;--text:#f4f4f5;--soft:#dcdde2;--mid:#c9cad1;--muted:#9a9ba4;--accent:#f5b16c;--blue:#8ab4f8;--green:#6fcf97;--red:#ff9b8f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Google Sans","Google Sans Text",Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{min-height:100vh;display:flex;flex-wrap:wrap;align-items:stretch}
+nav{flex:1 1 236px;max-width:236px;min-width:200px;background:var(--panel);border-right:1px solid var(--line2);padding:20px 10px;display:flex;flex-direction:column;gap:18px}
+.brand{padding:0 6px}.brand .logo{font-size:20px;font-weight:800;letter-spacing:.04em}
+.brand .org{font-size:13px;font-weight:700;margin-top:14px}.brand .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.navgroup{display:flex;flex-direction:column;gap:2px}
+.navlabel{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:6px 8px}
+.navitem{text-align:left;background:transparent;border:0;border-radius:6px;font-size:14px;padding:9px 10px}
+.navitem:hover{background:#24262b}.navitem.on{background:var(--line2)}
+main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--line2)}
+header .title{font-size:15px;font-weight:700}
+header .sync{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mid)}
+.btn{background:#24262b;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:700;padding:8px 10px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:8px 24px 0;border-bottom:1px solid var(--line2)}
+.tab{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;padding:10px 10px 12px}
+.tab.on{color:var(--text);font-weight:800;border-bottom-color:var(--accent)}
+.view{padding:20px 24px 48px;display:flex;flex-direction:column;gap:22px}
+.headrow{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between}
+h1{margin:0;font-size:20px;font-weight:600}
+.stats{font-size:12px;color:var(--mid)}.stats b{color:var(--text)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mid)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{flex:1 1 240px;max-width:320px;height:40px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:0 12px}
+.search::placeholder{color:var(--muted)}
+.pill{height:40px;border-radius:20px;font-size:13px;padding:0 14px;background:transparent;border:1px solid var(--line)}
+.pill.on{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:700}
+h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.card{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card:hover,.row:hover{background:#202227}
+.who{display:flex;gap:10px;align-items:center;min-width:0}
+.who>span:last-child{display:flex;flex-direction:column;min-width:0}
+.av{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.av.sm{width:30px;height:30px;font-size:11px}.av.lg{width:56px;height:56px;font-size:18px}
+.nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.counts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.count{background:var(--bg);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.count b{font-size:20px}.count span{font-size:11px;color:var(--mid)}
+.next{display:flex;flex-direction:column;gap:3px;min-height:52px}
+.tag{font-size:11px;color:var(--muted)}.tag.od{color:var(--red);font-weight:700}
+.nl{font-size:12px;color:var(--soft);line-height:1.35}
+.lastline{font-size:11px;color:var(--muted);border-top:1px solid var(--line2);padding-top:10px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.table{min-width:860px}
+.grid{display:grid;grid-template-columns:2.2fr 1.3fr 80px 80px 90px 1.2fr 2.4fr;gap:12px;align-items:center;padding:10px 16px}
+.thead{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line)}
+.row{width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line2);font-size:13px;min-height:56px}
+.row:last-child{border-bottom:0}
+.row .nl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:40px;text-align:center;color:var(--mid)}
+.back{background:transparent;border:1px solid var(--line);border-radius:8px;font-size:13px;padding:0 14px;height:40px}
+.phead{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.phead .id{display:flex;gap:14px;align-items:center}
+.phead h1{font-size:22px}.phead .meta{font-size:13px;color:var(--mid);margin-top:3px}
+.facts{display:flex;flex-wrap:wrap;gap:24px;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.facts b{display:block;font-size:13px;color:var(--text);font-weight:600;margin-top:3px;letter-spacing:0}
+.brief{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;line-height:1.5;color:var(--soft)}
+.cols{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.panel{flex:1 1 380px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.phd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.phd h2{margin:0;font-size:15px;font-weight:700}.phd span{font-size:13px;font-weight:700}
+.item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line2);align-items:flex-start}
+.item:last-child{border-bottom:0}
+.chk{flex:none;width:44px;height:44px;margin:-10px -12px;background:transparent;border:0;display:flex;align-items:center;justify-content:center}
+.box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center}
+.done .box{background:var(--green);border-color:var(--green)}
+.body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ttl{line-height:1.4}.done .ttl{color:var(--muted);text-decoration:line-through}
+.metarow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700}
+.c-Task{color:#f5b16c;background:rgba(245,177,108,.12)}
+.c-Follow-up{color:#8ab4f8;background:rgba(138,180,248,.12)}
+.c-Asset{color:#c9a7f5;background:rgba(201,167,245,.12)}
+.c-wait{color:#ffd27a;background:rgba(255,210,122,.12)}
+.c-dec{color:#7fd4c1;background:rgba(127,212,193,.12)}
+.due{color:var(--mid)}.due.od{color:var(--red);font-weight:700}.due.ok{color:var(--green)}
+.hv{color:var(--green)}.ai{color:var(--accent)}
+.nudge{flex:none;height:36px;border-radius:8px;font-size:12px;font-weight:600;padding:0 12px;background:transparent;border:1px solid var(--line)}
+.nudge.on{background:rgba(111,207,151,.12);border-color:var(--green);color:var(--green)}
+.none{padding:24px 16px;color:var(--mid);font-size:13px}
+.eng{display:flex;gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line2)}
+.eng:last-child{border-bottom:0}
+.eng .w{flex:none;width:56px;font-size:12px;color:var(--muted)}.eng .t{flex:1;min-width:0;line-height:1.4}.eng .k{flex:none;font-size:12px;color:var(--muted)}
+.note{font-size:11px;color:var(--muted);padding:0 8px;margin-top:auto;line-height:1.4}
+@media (max-width:640px){nav{max-width:none}.view{padding:16px 16px 40px}header,.tabs{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav aria-label="Workspace">
+    <div class="brand"><div class="logo">JUNKOLA</div><div class="org">Junkola</div><div class="sub">Omniform Awareness Engine</div></div>
+    <div class="navgroup"><div class="navlabel">DASHBOARD VIEWS</div>
+      <button class="navitem on">Me</button><button class="navitem">My departments</button><button class="navitem">The Business</button><button class="navitem">Daily Pulse</button></div>
+    <div class="navgroup"><div class="navlabel">DISCOVERY</div>
+      <button class="navitem">Org Chart</button><button class="navitem">Group Knowledge</button><button class="navitem">Data Room</button><button class="navitem">FAA Regulation Query</button></div>
+    <div class="note">Prototype with sample data. Only the People tab is wired up.</div>
+  </nav>
+  <main>
+    <header><div class="title">Omniform Awareness Engine</div><div class="sync"><span>Synced Nov 11, 8:01 AM</span><button class="btn">Sync now</button></div></header>
+    <div class="tabs" role="tablist" aria-label="Product areas">
+      <button class="tab" role="tab" aria-selected="false">Chat</button>
+      <button class="tab" role="tab" aria-selected="false">Signals</button>
+      <button class="tab" role="tab" aria-selected="false">Engagements</button>
+      <button class="tab on" role="tab" aria-selected="true" data-act="back">People</button>
+    </div>
+    <div id="view" class="view"></div>
+  </main>
+</div>
+<script>
+(function(){
+var GM='Google Meet',GL='Gmail',GC='Google Calendar';
+// item: [kind, title, due, overdue, source, humanVerified]
+var DATA=[
+{id:'mo',name:'Marcus Okafor',role:'Chief Engineer',dept:'Propulsion',pin:1,hue:28,last:'Today, 9:30 AM',next:'Thu Nov 12, 2:00 PM',
+ owe:[['Asset','Updated thermal margin slides for the motor controller review','Nov 9',1,GM+' · Nov 5',1],['Task','Approve the revised test-stand budget line','Nov 13',0,GL+' · Nov 10',1],['Follow-up','Reply on whether the Q1 hover test can slip one week','Nov 12',0,GM+' · Nov 11',0]],
+ owed:[['Asset','Bench data from the hybrid generator endurance run','Nov 14',0,GM+' · Nov 5',1],['Task','Name a propulsion owner for the supplier audit','Nov 10',1,GL+' · Nov 3',0]],
+ pending:[['Whether to qualify a second inverter supplier','Nov 5',GM]],
+ decisions:[['Freeze the rotor hub design at revision C','Nov 5',GM],['Move endurance testing to the Mojave stand','Oct 29',GL]],
+ eng:[['Nov 11','Propulsion weekly sync',GM],['Nov 10','Re: test-stand budget revision',GL],['Nov 5','Motor controller design review',GM]]},
+{id:'pr',name:'Priya Raman',role:'Head of Certification',dept:'Regulatory',pin:1,hue:280,last:'Yesterday',next:'Fri Nov 13, 10:00 AM',
+ owe:[['Asset','Draft means-of-compliance matrix, sections 4 to 6','Nov 13',0,GM+' · Nov 6',1],['Follow-up','Intro to the outside DER consultant','Nov 16',0,GL+' · Nov 10',0]],
+ owed:[['Asset','Marked-up G-1 issue paper','Nov 12',0,GM+' · Nov 6',1],['Follow-up','FAA feedback summary from the October meeting','Nov 8',1,GL+' · Nov 2',1],['Task','Confirm attendees for the certification workshop','Nov 17',0,GC+' · Nov 9',0]],
+ pending:[],
+ decisions:[['Pursue the powered-lift path under Part 21.17(b)','Nov 6',GM],['Hold the certification plan submission until the G-1 is signed','Oct 27',GM]],
+ eng:[['Nov 10','Re: DER consultant options',GL],['Nov 6','Certification strategy review',GM],['Nov 2','FAA meeting debrief',GL]]},
+{id:'dc',name:'Daniel Cho',role:'Chief Financial Officer',dept:'Finance',pin:1,hue:200,last:'Mon Nov 9',next:'Mon Nov 16, 11:00 AM',
+ owe:[['Asset','Headcount plan for the 2027 budget','Nov 6',1,GL+' · Oct 30',1],['Task','Sign off on the tooling purchase order','Nov 12',0,GL+' · Nov 9',1]],
+ owed:[['Asset','Updated runway model with the bridge round included','Nov 13',0,GM+' · Nov 9',1]],
+ pending:[['Approval of the flight-test contractor rate increase','Nov 9',GM]],
+ decisions:[['Cap Q4 discretionary spend at the October level','Nov 9',GM]],
+ eng:[['Nov 9','Budget planning one-on-one',GM],['Nov 9','Tooling PO for approval',GL],['Oct 30','2027 headcount inputs',GL]]},
+{id:'sl',name:'Sofia Lindqvist',role:'VP Program Management',dept:'Programs',pin:1,hue:150,last:'Today, 11:15 AM',next:'Today, 4:00 PM',
+ owe:[['Follow-up','Confirm which milestones move in the re-baselined schedule','Nov 11',0,GM+' · Nov 11',0]],
+ owed:[['Asset','Integrated master schedule, re-baselined','Nov 13',0,GM+' · Nov 4',1],['Task','Add supplier lead times to the risk register','Nov 16',0,GM+' · Nov 11',0]],
+ pending:[],
+ decisions:[['Run program reviews every two weeks instead of monthly','Nov 4',GM],['Assign Tomás as flight-test integration lead','Oct 28',GL]],
+ eng:[['Nov 11','Schedule re-baseline working session',GM],['Nov 4','Program review',GM],['Oct 28','Re: flight-test integration lead',GL]]},
+{id:'th',name:'Tomás Herrera',role:'Director of Flight Test',dept:'Flight Test',pin:1,hue:350,last:'Tue Nov 10',next:'Wed Nov 18, 9:00 AM',
+ owe:[['Task','Approve the telemetry vendor shortlist','Nov 14',0,GL+' · Nov 10',1],['Asset','Insurance certificate for the test range','Nov 17',0,GM+' · Nov 3',0]],
+ owed:[['Asset','Test card set for tethered hover','Nov 12',0,GM+' · Nov 3',1]],
+ pending:[['Go or no-go on the second test pilot hire','Nov 3',GM]],
+ decisions:[['Use the Mojave range for the first tethered hover','Nov 3',GM]],
+ eng:[['Nov 10','Telemetry vendor shortlist',GL],['Nov 3','Flight-test readiness review',GM]]},
+{id:'hi',name:'Hana Ishikawa',role:'Head of Investor Relations',dept:'Corporate',pin:1,hue:55,last:'Mon Nov 9',next:'Thu Nov 12, 9:00 AM',
+ owe:[['Asset','Technical milestones paragraph for the investor update','Nov 12',0,GL+' · Nov 9',1],['Follow-up','Answers to two diligence questions on battery sourcing','Nov 7',1,GL+' · Nov 4',0]],
+ owed:[['Follow-up','Feedback from the lead investor call','Nov 11',0,GM+' · Nov 9',0]],
+ pending:[],
+ decisions:[['Send the investor update on the 15th, not month end','Nov 9',GM]],
+ eng:[['Nov 9','Investor update planning',GM],['Nov 9','Draft: November investor update',GL],['Nov 4','Diligence questions, battery sourcing',GL]]},
+{id:'ba',name:'Ben Adler',role:'Avionics Lead',dept:'Engineering',hue:210,last:'Fri Nov 6',next:'Not scheduled',
+ owe:[['Follow-up','Share the flight-computer redundancy requirement','Nov 13',0,GM+' · Nov 6',0]],owed:[['Asset','Avionics bay wiring diagram','Nov 18',0,GM+' · Nov 6',1]],pending:[],
+ decisions:[['Standardize on a triple-redundant flight computer','Nov 6',GM]],eng:[['Nov 6','Avionics architecture review',GM]]},
+{id:'an',name:'Amara Nwosu',role:'General Counsel',dept:'Legal',hue:320,last:'Thu Nov 5',next:'Tue Nov 17, 1:00 PM',
+ owe:[['Task','Review the supplier NDA redlines','Nov 10',1,GL+' · Nov 5',1]],owed:[],pending:[['Sign-off on the export-control language','Nov 5',GL]],
+ decisions:[],eng:[['Nov 5','Supplier NDA redlines',GL]]},
+{id:'ri',name:'Rajesh Iyer',role:'Supply Chain Director',dept:'Operations',hue:30,last:'Tue Nov 10',next:'Not scheduled',
+ owe:[],owed:[['Asset','Lead-time report for the long-lead motor parts','Nov 13',0,GM+' · Nov 10',1],['Follow-up','Quote from the backup magnet supplier','Nov 9',1,GL+' · Nov 2',0]],pending:[],
+ decisions:[['Dual-source the stator laminations','Nov 10',GM]],eng:[['Nov 10','Supply chain risk review',GM],['Nov 2','Backup magnet supplier',GL]]},
+{id:'mz',name:'Mei-Ling Zhou',role:'Data Platform Lead',dept:'Engineering',hue:170,last:'Wed Nov 4',next:'Not scheduled',
+ owe:[['Asset','Sample telemetry files for the ingestion pipeline','Nov 16',0,GM+' · Nov 4',0]],owed:[['Task','Grant access to the test-data workspace','Nov 12',0,GL+' · Nov 4',1]],pending:[],
+ decisions:[],eng:[['Nov 4','Telemetry pipeline kickoff',GM]]},
+{id:'og',name:'Owen Gallagher',role:'Safety Officer',dept:'Flight Test',hue:100,last:'Mon Nov 2',next:'Wed Nov 18, 9:00 AM',
+ owe:[],owed:[['Asset','Hazard analysis for tethered hover','Nov 16',0,GM+' · Nov 2',1]],pending:[],
+ decisions:[['Require a safety review 48 hours before any powered test','Nov 2',GM]],eng:[['Nov 2','Safety review board',GM]]},
+{id:'yd',name:'Yusuf Demir',role:'Battery Systems Engineer',dept:'Propulsion',hue:250,last:'Thu Oct 29',next:'Not scheduled',
+ owe:[['Follow-up','Send the diligence questions on cell sourcing','Nov 12',0,GL+' · Nov 4',0]],owed:[],pending:[],
+ decisions:[],eng:[['Oct 29','Battery pack thermal results',GL]]},
+{id:'cm',name:'Chloe Martin',role:'People Operations Manager',dept:'People',hue:340,last:'Tue Nov 3',next:'Not scheduled',
+ owe:[['Task','Complete interview scorecard for the test pilot candidate','Nov 6',1,GC+' · Nov 3',1]],owed:[['Follow-up','Offer timeline for the controls engineer role','Nov 13',0,GL+' · Nov 3',0]],pending:[],
+ decisions:[],eng:[['Nov 3','Hiring pipeline check-in',GM]]},
+{id:'np',name:'Nikolai Petrov',role:'Structures Lead',dept:'Engineering',hue:190,last:'Fri Oct 30',next:'Not scheduled',
+ owe:[],owed:[],pending:[],decisions:[['Switch the boom layup to the toughened resin system','Oct 30',GM]],eng:[['Oct 30','Structures design review',GM]]},
+{id:'gp',name:'Grace Park',role:'Marketing Manager',dept:'Corporate',hue:300,last:'Wed Oct 28',next:'Not scheduled',
+ owe:[['Asset','Approved quote for the press release','Nov 13',0,GL+' · Oct 28',1]],owed:[],pending:[],decisions:[],eng:[['Oct 28','Press release draft',GL]]},
+{id:'lb',name:'Leo Brandt',role:'Manufacturing Engineer',dept:'Operations',hue:80,last:'Mon Oct 26',next:'Not scheduled',
+ owe:[],owed:[['Follow-up','Fixture cost estimate for the pilot line','Nov 20',0,GM+' · Oct 26',0]],pending:[],decisions:[],eng:[['Oct 26','Pilot line planning',GM]]},
+{id:'if',name:'Isabel Fuentes',role:'Executive Assistant',dept:'Corporate',hue:20,last:'Today, 8:10 AM',next:'Not scheduled',
+ owe:[['Follow-up','Confirm travel dates for the supplier visit','Nov 12',0,GL+' · Nov 11',1]],owed:[],pending:[],decisions:[],eng:[['Nov 11','Supplier visit travel',GL]]},
+{id:'sw',name:'Sam Whitaker',role:'IT Administrator',dept:'Operations',hue:230,last:'Thu Oct 22',next:'Not scheduled',
+ owe:[],owed:[],pending:[],decisions:[],eng:[['Oct 22','Laptop refresh schedule',GL]]}
+];
+var S={sel:null,filter:'all',q:'',done:{},nudged:{}};
+var view=document.getElementById('view');
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function plural(n,w){return n+' '+w+(n===1?'':'s');}
+function build(){
+  return DATA.map(function(p){
+    var first=p.name.split(' ')[0];
+    function it(r,id){var done=!!S.done[id];return {id:id,k:r[0],t:r[1],due:r[2],od:!!r[3]&&!done,src:r[4],v:r[5],done:done,nudged:!!S.nudged[id]};}
+    var owe=p.owe.map(function(r,i){return it(r,p.id+'o'+i);}),owed=p.owed.map(function(r,i){return it(r,p.id+'d'+i);});
+    var oo=owe.filter(function(x){return !x.done;}),dd=owed.filter(function(x){return !x.done;});
+    var oweOd=oo.filter(function(x){return x.od;}),owedOd=dd.filter(function(x){return x.od;}).length;
+    var tag,line,od=false;
+    if(oweOd.length){tag='OVERDUE FROM YOU';line=oweOd[0].t;od=true;}
+    else if(oo.length){tag='YOU OWE · DUE '+oo[0].due.toUpperCase();line=oo[0].t;}
+    else if(dd.length){tag='WAITING ON '+first.toUpperCase()+' · '+dd[0].due.toUpperCase();line=dd[0].t;}
+    else{tag='ALL CLEAR';line='Nothing open between you.';}
+    return {p:p,first:first,owe:owe,owed:owed,oweN:oo.length,owedN:dd.length,odN:oweOd.length+owedOd,tag:tag,line:line,tagOd:od,
+      initials:p.name.split(' ').map(function(w){return w[0];}).join(''),
+      av:'background:hsl('+p.hue+',35%,26%);color:hsl('+p.hue+',80%,86%)',
+      brief:'You owe '+first+' '+plural(oo.length,'item')+(oweOd.length?' ('+oweOd.length+' overdue)':'')+'. '+first+' owes you '+plural(dd.length,'item')+(owedOd?' ('+owedOd+' overdue)':'')+'. '+(p.pending.length?plural(p.pending.length,'decision')+' waiting on '+first+'. ':'')+plural(p.decisions.length,'decision')+' captured from '+first+' recently.'};
+  });
+}
+var TESTS={all:function(){return true;},owe:function(x){return x.oweN>0;},owed:function(x){return x.owedN>0;},overdue:function(x){return x.odN>0;},decision:function(x){return x.p.pending.length>0;}};
+var FILTERS=[['all','All'],['owe','I owe them'],['owed','They owe me'],['overdue','Overdue'],['decision','Awaiting their decision']];
+function nextBlock(x){return '<span class="tag'+(x.tagOd?' od':'')+'">'+esc(x.tag)+'</span><span class="nl">'+esc(x.line)+'</span>';}
+function listHTML(all){
+  var q=S.q.trim().toLowerCase();
+  var vis=all.filter(function(x){return TESTS[S.filter](x)&&(!q||(x.p.name+' '+x.p.role+' '+x.p.dept).toLowerCase().indexOf(q)>=0);});
+  var sum=function(k){return all.reduce(function(a,x){return a+x[k];},0);};
+  var pinned=vis.filter(function(x){return x.p.pin;}),others=vis.filter(function(x){return !x.p.pin;});
+  var h='<div class="headrow"><div class="headrow" style="justify-content:flex-start"><h1>People</h1><span class="stats"><b>'+all.length+' people</b> · you owe <b>'+sum('oweN')+'</b> · owed to you <b>'+sum('owedN')+'</b> · <span style="color:var(--red)">'+sum('odN')+' overdue</span></span></div>'+
+    '<div class="legend"><span><span class="hv">●</span> Human verified</span><span><span class="ai">●</span> AI suggested</span></div></div>';
+  h+='<div class="controls"><input id="q" class="search" aria-label="Search people" placeholder="Search name, role or department" value="'+esc(S.q)+'">'+
+    FILTERS.map(function(f){var on=S.filter===f[0];return '<button class="pill'+(on?' on':'')+'" aria-pressed="'+on+'" data-act="filter" data-id="'+f[0]+'">'+f[1]+'</button>';}).join('')+'</div>';
+  if(pinned.length){h+='<section><h2 class="sec">MOST ENGAGED</h2><div class="cards">'+pinned.map(function(x){
+    return '<button class="card" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
+      '<span class="counts"><span class="count"><b style="color:var(--accent)">'+x.oweN+'</b><span>You owe</span></span><span class="count"><b style="color:var(--blue)">'+x.owedN+'</b><span>Owes you</span></span></span>'+
+      '<span class="next">'+nextBlock(x)+'</span><span class="lastline">Last: '+esc(x.p.last)+'</span></button>';}).join('')+'</div></section>';}
+  if(others.length){h+='<section><h2 class="sec">EVERYONE ELSE</h2><div class="tablewrap"><div class="table"><div class="grid thead"><span>PERSON</span><span>DEPARTMENT</span><span>YOU OWE</span><span>OWES YOU</span><span>DECISIONS</span><span>LAST ENGAGEMENT</span><span>NEXT UP</span></div>'+others.map(function(x){
+    return '<button class="grid row" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av sm" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm" style="font-weight:600">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
+      '<span style="color:var(--mid)">'+esc(x.p.dept)+'</span><span style="font-weight:700;color:'+(x.oweN?'var(--accent)':'var(--muted)')+'">'+x.oweN+'</span><span style="font-weight:700;color:'+(x.owedN?'var(--blue)':'var(--muted)')+'">'+x.owedN+'</span>'+
+      '<span style="color:var(--mid)">'+x.p.decisions.length+'</span><span style="color:var(--mid)">'+esc(x.p.last)+'</span><span class="nx">'+nextBlock(x)+'</span></button>';}).join('')+'</div></div></section>';}
+  if(!vis.length)h+='<div class="empty">No people match this view.</div>';
+  return h;
+}
+function itemHTML(it,mine){
+  var label=(it.done?'Reopen: ':(mine?'Mark delivered: ':'Mark received: '))+it.t;
+  var due=it.done?'<span class="due ok">Done</span>':(it.od?'<span class="due od">Overdue · was due '+it.due+'</span>':'<span class="due">Due '+it.due+'</span>');
+  return '<div class="item'+(it.done?' done':'')+'"><button class="chk" data-act="toggle" data-id="'+it.id+'" aria-pressed="'+it.done+'" aria-label="'+esc(label)+'"><span class="box">'+(it.done?'<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#151619" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>':'')+'</span></button>'+
+    '<div class="body"><span class="ttl">'+esc(it.t)+'</span><span class="metarow"><span class="chip c-'+it.k+'">'+it.k+'</span>'+due+'<span>'+esc(it.src)+'</span><span class="'+(it.v?'hv':'ai')+'">● '+(it.v?'Human verified':'AI suggested')+'</span></span></div>'+
+    (mine?'':'<button class="nudge'+(it.nudged?' on':'')+'" data-act="nudge" data-id="'+it.id+'">'+(it.nudged?'Nudge drafted':'Draft nudge')+'</button>')+'</div>';
+}
+function detailHTML(x){
+  var p=x.p,f=esc(x.first);
+  var dec=p.pending.map(function(d){return '<div class="item"><div class="body"><span class="ttl">'+esc(d[0])+'</span><span class="metarow"><span class="chip c-wait">Awaiting decision</span><span>asked '+d[1]+'</span><span>'+d[2]+'</span></span></div></div>';}).join('')+
+    p.decisions.map(function(d){return '<div class="item"><div class="body"><span class="ttl">'+esc(d[0])+'</span><span class="metarow"><span class="chip c-dec">Decided</span><span>'+d[1]+'</span><span>'+d[2]+'</span></span></div></div>';}).join('');
+  return '<div><button class="back" data-act="back">← All people</button></div>'+
+    '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div></div>'+
+    '<div class="facts"><span>LAST ENGAGEMENT<b>'+esc(p.last)+'</b></span><span>NEXT MEETING<b>'+esc(p.next)+'</b></span></div></div>'+
+    '<div class="brief">'+esc(x.brief)+'</div>'+
+    '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+'</section>'+
+    '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+'</section></div>'+
+    '<div class="cols"><section class="panel"><div class="phd"><h2>Decisions</h2></div>'+(dec||'<div class="none">No decisions captured yet.</div>')+'</section>'+
+    '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>';
+}
+function render(keepFocus){
+  var all=build();
+  var sel=S.sel&&all.filter(function(x){return x.p.id===S.sel;})[0];
+  view.innerHTML=sel?detailHTML(sel):listHTML(all);
+  if(keepFocus){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}}
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');if(!b)return;
+  var a=b.dataset.act,id=b.dataset.id;
+  if(a==='open'){S.sel=id;window.scrollTo(0,0);}
+  else if(a==='back')S.sel=null;
+  else if(a==='filter')S.filter=id;
+  else if(a==='toggle')S.done[id]=!S.done[id];
+  else if(a==='nudge')S.nudged[id]=!S.nudged[id];
+  render();
+});
+view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
+render();
+})();
+</script>
+</body>
+</html>
