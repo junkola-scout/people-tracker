@@ -55,7 +55,7 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .lastline{font-size:11px;color:var(--muted);border-top:1px solid var(--line2);padding-top:10px}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .table{min-width:860px}
-.grid{display:grid;grid-template-columns:2.2fr 1.3fr 80px 80px 90px 1.2fr 2.4fr;gap:12px;align-items:center;padding:10px 16px}
+.grid{display:grid;grid-template-columns:2.2fr 1.3fr 80px 80px 1.2fr 2.4fr;gap:12px;align-items:center;padding:10px 16px}
 .thead{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line)}
 .row{width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line2);font-size:13px;min-height:56px}
 .row:last-child{border-bottom:0}
@@ -131,12 +131,26 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .eng:last-child{border-bottom:0}
 .eng .w{flex:none;width:56px;font-size:12px;color:var(--muted)}.eng .t{flex:1;min-width:0;line-height:1.4}.eng .k{flex:none;font-size:12px;color:var(--muted)}
 .note{font-size:11px;color:var(--muted);padding:0 8px;margin-top:auto;line-height:1.4}
-@media (max-width:640px){nav{max-width:none}.view{padding:16px 16px 40px}header,.tabs{padding-left:16px;padding-right:16px}}
+.hleft{display:flex;align-items:center;gap:10px;min-width:0}
+.burger,.navclose{display:none;flex:none;width:44px;height:44px;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);border-radius:8px}
+.navclose{position:absolute;top:12px;right:10px;border-color:transparent}
+.scrim{display:none}
+@media (max-width:768px){
+nav{position:fixed;top:0;left:0;bottom:0;z-index:20;width:272px;max-width:82vw;flex:none;overflow-y:auto;transform:translateX(-100%);visibility:hidden;transition:transform .2s ease,visibility .2s}
+nav.open{transform:none;visibility:visible;box-shadow:0 0 40px rgba(0,0,0,.5)}
+.scrim.open{display:block;position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.55)}
+.burger,.navclose{display:flex}
+.navitem{padding:12px 10px}
+.view{padding:16px 16px 40px}header,.tabs{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){nav{transition:none}}
 </style>
 </head>
 <body>
+<div class="scrim" id="scrim"></div>
 <div class="app">
-  <nav aria-label="Workspace">
+  <nav id="nav" aria-label="Workspace">
+    <button class="navclose" id="navclose" aria-label="Close menu"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
     <div class="brand"><div class="logo">JUNKOLA</div><div class="org">Junkola</div><div class="sub">Omniform Awareness Engine</div></div>
     <div class="navgroup"><div class="navlabel">DASHBOARD VIEWS</div>
       <button class="navitem on">Me</button><button class="navitem">My departments</button><button class="navitem">The Business</button><button class="navitem">Daily Pulse</button></div>
@@ -145,7 +159,7 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
     <div class="note">Prototype with sample data. Only the People tab is wired up.</div>
   </nav>
   <main>
-    <header><div class="title">Omniform Awareness Engine</div><div class="sync"><span>Synced Nov 11, 8:01 AM</span><button class="btn">Sync now</button></div></header>
+    <header><div class="hleft"><button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg></button><div class="title">Omniform Awareness Engine</div></div><div class="sync"><span>Synced Nov 11, 8:01 AM</span><button class="btn">Sync now</button></div></header>
     <div class="tabs" role="tablist" aria-label="Product areas">
       <button class="tab" role="tab" aria-selected="false">Chat</button>
       <button class="tab" role="tab" aria-selected="false">Signals</button>
@@ -262,7 +276,7 @@ function kdec(d,st){
 function boardHTML(x){
   var p=x.p;
   var decs=p.pending.map(function(d){var st=d.st||0;return {st:st,h:kdec(d,st)};}).concat(p.decisions.map(function(d){return {st:2,h:kdec(d,2)};}));
-  var rows=[['What I Owe','var(--accent)',x.owe.map(function(i){return {st:i.st,h:kcard(i)};})],['What Is Owed to Me','var(--blue)',x.owed.map(function(i){return {st:i.st,h:kcard(i)};})],['Decisions','#7fd4c1',decs]];
+  var rows=[['What I Owe','var(--accent)',x.owe.map(function(i){return {st:i.st,h:kcard(i)};})],['What Is Owed to Me','var(--blue)',x.owed.map(function(i){return {st:i.st,h:kcard(i)};})]];
   var h='<div class="tablewrap kwrap"><div class="kb"><div class="kh"></div>'+COLS.map(function(c,ci){var n=rows.reduce(function(a,r){return a+r[2].filter(function(k){return k.st===ci;}).length;},0);return '<div class="kh">'+c.toUpperCase()+' <b>'+n+'</b></div>';}).join('');
   rows.forEach(function(r,ri){
     h+='<div class="kl" data-rowlabel="'+ri+'"><span class="kdot" style="background:'+r[1]+'"></span><span>'+r[0]+'<small>'+r[2].length+' total</small></span></div>';
@@ -309,11 +323,11 @@ function build(){
     return {p:p,first:first,owe:owe,owed:owed,oweN:oo.length,owedN:dd.length,odN:oweOd.length+owedOd,tag:tag,line:line,tagOd:od,
       initials:p.name.split(' ').map(function(w){return w[0];}).join(''),
       av:'background:hsl('+p.hue+',35%,26%);color:hsl('+p.hue+',80%,86%)',
-      brief:'You owe '+first+' '+plural(oo.length,'item')+(oweOd.length?' ('+oweOd.length+' overdue)':'')+'. '+first+' owes you '+plural(dd.length,'item')+(owedOd?' ('+owedOd+' overdue)':'')+'. '+(p.pending.length?plural(p.pending.length,'decision')+' waiting on '+first+'. ':'')+plural(p.decisions.length,'decision')+' captured from '+first+' recently.'};
+      brief:'You owe '+first+' '+plural(oo.length,'item')+(oweOd.length?' ('+oweOd.length+' overdue)':'')+'. '+first+' owes you '+plural(dd.length,'item')+(owedOd?' ('+owedOd+' overdue)':'')+'.'};
   });
 }
 var TESTS={all:function(){return true;},owe:function(x){return x.oweN>0;},owed:function(x){return x.owedN>0;},overdue:function(x){return x.odN>0;},decision:function(x){return x.p.pending.length>0;}};
-var FILTERS=[['all','All'],['owe','I owe them'],['owed','They owe me'],['overdue','Overdue'],['decision','Awaiting their decision']];
+var FILTERS=[['all','All'],['owe','I owe them'],['owed','They owe me'],['overdue','Overdue']];
 function nextBlock(x){return '<span class="tag'+(x.tagOd?' od':'')+'">'+esc(x.tag)+'</span><span class="nl">'+esc(x.line)+'</span>';}
 function listHTML(all){
   var q=S.q.trim().toLowerCase();
@@ -328,10 +342,10 @@ function listHTML(all){
     return '<button class="card" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
       '<span class="counts"><span class="count"><b style="color:var(--accent)">'+x.oweN+'</b><span>You owe</span></span><span class="count"><b style="color:var(--blue)">'+x.owedN+'</b><span>Owes you</span></span></span>'+
       '<span class="next">'+nextBlock(x)+'</span><span class="lastline">Last: '+esc(x.p.last)+'</span></button>';}).join('')+'</div></section>';}
-  if(others.length){h+='<section><h2 class="sec">EVERYONE ELSE</h2><div class="tablewrap"><div class="table"><div class="grid thead"><span>PERSON</span><span>DEPARTMENT</span><span>YOU OWE</span><span>OWES YOU</span><span>DECISIONS</span><span>LAST ENGAGEMENT</span><span>NEXT UP</span></div>'+others.map(function(x){
+  if(others.length){h+='<section><h2 class="sec">EVERYONE ELSE</h2><div class="tablewrap"><div class="table"><div class="grid thead"><span>PERSON</span><span>DEPARTMENT</span><span>YOU OWE</span><span>OWES YOU</span><span>LAST ENGAGEMENT</span><span>NEXT UP</span></div>'+others.map(function(x){
     return '<button class="grid row" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av sm" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm" style="font-weight:600">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
       '<span style="color:var(--mid)">'+esc(x.p.dept)+'</span><span style="font-weight:700;color:'+(x.oweN?'var(--accent)':'var(--muted)')+'">'+x.oweN+'</span><span style="font-weight:700;color:'+(x.owedN?'var(--blue)':'var(--muted)')+'">'+x.owedN+'</span>'+
-      '<span style="color:var(--mid)">'+x.p.decisions.length+'</span><span style="color:var(--mid)">'+esc(x.p.last)+'</span><span class="nx">'+nextBlock(x)+'</span></button>';}).join('')+'</div></div></section>';}
+      '<span style="color:var(--mid)">'+esc(x.p.last)+'</span><span class="nx">'+nextBlock(x)+'</span></button>';}).join('')+'</div></div></section>';}
   if(!vis.length)h+='<div class="empty">No people match this view.</div>';
   return h;
 }
@@ -352,7 +366,7 @@ function detailHTML(x){
     '<div class="brief">'+esc(x.brief)+'</div>'+toggleHTML()+(S.mode==='board'?boardHTML(x)+'<div class="cols"><section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>':
     '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+addBar('owe','Add something you owe '+f)+'</section>'+
     '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+addBar('owed','Add something '+f+' owes you')+'</section></div>'+
-    '<div class="cols"><section class="panel"><div class="phd"><h2>Decisions</h2></div>'+(dec||'<div class="none">No decisions captured yet.</div>')+addBar('dec','Add a decision')+'</section>'+
+    '<div class="cols">'+
     '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>');
 }
 function render(keepFocus){
@@ -399,6 +413,13 @@ view.addEventListener('dragend',function(){drag=null;[].forEach.call(view.queryS
 view.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.form){S.form=null;render();}});
 view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
 render();
+var nav=document.getElementById('nav'),burger=document.getElementById('burger'),scrim=document.getElementById('scrim');
+function menu(open){nav.classList.toggle('open',open);scrim.classList.toggle('open',open);burger.setAttribute('aria-expanded',open);if(open)nav.querySelector('.navitem').focus();else if(document.activeElement&&nav.contains(document.activeElement))burger.focus();}
+burger.addEventListener('click',function(){menu(!nav.classList.contains('open'));});
+scrim.addEventListener('click',function(){menu(false);});
+document.getElementById('navclose').addEventListener('click',function(){menu(false);});
+nav.addEventListener('click',function(e){if(e.target.closest('.navitem'))menu(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&nav.classList.contains('open'))menu(false);});
 })();
 </script>
 </body>
