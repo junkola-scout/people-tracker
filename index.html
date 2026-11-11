@@ -192,6 +192,8 @@ dialog h2{margin:4px 0 0;font-size:18px;font-weight:600;line-height:1.3}
 .pbody{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pact{display:flex;flex-wrap:wrap;gap:6px}
 .prionone{border:1px dashed var(--line);border-radius:10px;padding:14px 16px}
+.pedit{border:1px solid var(--line);border-radius:10px}
+.padd{height:auto;min-height:72px;text-align:center}
 .c-issue{color:#ff9b8f;background:rgba(255,155,143,.12)}
 .kconv{align-self:flex-start}
 .hleft{display:flex;align-items:center;gap:10px;min-width:0}
@@ -348,12 +350,24 @@ var MAXPIN=6,MAXPRIO=3;
   });
 })();
 function vdot(v,full){return '<span class="'+(v?'hv':'ai')+'"'+(full?'':' title="'+(v?'Human verified':'AI suggested')+'"')+'>●'+(full?' '+(v?'Human verified':'AI suggested'):'')+'</span>';}
+function prioForm(q){
+  return '<form class="edit pedit" data-side="prio"><input name="t" class="fin ft" aria-label="Priority" placeholder="What is this person focused on?" value="'+esc(q?q.t:'')+'" required><div class="frow"><span style="flex:1"></span>'+(q?'<button type="button" class="fbtn del" data-act="pdel">Delete</button>':'')+'<button type="button" class="fbtn" data-act="pcancel">Cancel</button><button type="submit" class="fbtn pri">Save</button></div></form>';
+}
 function prioHTML(x){
-  var ps=x.p.prios,f=esc(x.first);
+  var ps=x.p.prios,f=esc(x.first),pf=S.pform,adding=pf&&pf.i==null;
+  var cards=ps.map(function(q,i){
+    if(pf&&pf.i===i)return prioForm(q);
+    var t=esc(q.t);
+    return '<div class="pcard"><span class="pnum">'+(i+1)+'</span><span class="pbody"><span class="ttl">'+t+'</span><span class="metarow"><span>'+esc(q.src)+'</span>'+vdot(q.v,true)+'</span><span class="pact">'+
+      (q.v?'':'<button class="kbtn" data-act="pconf" data-id="'+i+'" aria-label="Confirm priority: '+t+'">Confirm</button><button class="kbtn" data-act="pdis" data-id="'+i+'" aria-label="Dismiss priority: '+t+'">Dismiss</button>')+
+      '<button class="kbtn" data-act="pedit" data-id="'+i+'" aria-label="Edit priority: '+t+'">Edit</button>'+
+      (i>0?'<button class="kbtn" data-act="pup" data-id="'+i+'" aria-label="Move up in rank: '+t+'">←</button>':'')+
+      (i<ps.length-1?'<button class="kbtn" data-act="pdown" data-id="'+i+'" aria-label="Move down in rank: '+t+'">→</button>':'')+'</span></span></div>';
+  }).join('');
+  if(adding)cards+=prioForm(null);
+  else if(ps.length<MAXPRIO)cards+='<button class="add padd" data-act="padd">+ Add a priority</button>';
   return '<section class="prio"><div class="priohd"><h2 class="sec" style="margin:0">'+f.toUpperCase()+'&#39;S PRIORITIES <b class="pc">'+ps.length+'/'+MAXPRIO+'</b></h2><span>What '+f+' is focused on right now. Context for the items below, not tasks.</span></div>'+
-    (ps.length?'<div class="priogrid">'+ps.map(function(q,i){
-      return '<div class="pcard"><span class="pnum">'+(i+1)+'</span><span class="pbody"><span class="ttl">'+esc(q.t)+'</span><span class="metarow"><span>'+esc(q.src)+'</span>'+vdot(q.v,true)+'</span>'+(q.v?'':'<span class="pact"><button class="kbtn" data-act="pconf" data-id="'+i+'" aria-label="Confirm priority: '+esc(q.t)+'">Confirm</button><button class="kbtn" data-act="pdis" data-id="'+i+'" aria-label="Dismiss priority: '+esc(q.t)+'">Dismiss</button></span>')+'</span></div>';}).join('')+'</div>'
-      :'<div class="none prionone">No priorities extracted for '+f+' yet.</div>')+'</section>';
+    (ps.length||adding?'':'<div class="none prionone">No priorities extracted for '+f+' yet.</div>')+'<div class="priogrid">'+cards+'</div></section>';
 }
 function convUI(q,first){
   if(q.st===2)return '';
@@ -551,8 +565,8 @@ document.addEventListener('click',function(e){
   var a=b.dataset.act,id=b.dataset.id;
   if(a==='cal'){openCal();return;}
   if(a==='eng'){document.getElementById('engdlg').showModal();return;}
-  if(a==='open'){S.sel=id;S.form=null;window.scrollTo(0,0);}
-  else if(a==='back'){S.sel=null;S.form=null;}
+  if(a==='open'){S.sel=id;S.form=null;S.pform=null;window.scrollTo(0,0);}
+  else if(a==='back'){S.sel=null;S.form=null;S.pform=null;}
   else if(a==='filter')S.filter=id;
   else if(a==='toggle'){var x=find(person(),id).o;x.done=!x.done;x.st=x.done?2:0;}
   else if(a==='nudge'){var y=find(person(),id).o;y.nudged=!y.nudged;}
@@ -562,7 +576,12 @@ document.addEventListener('click',function(e){
   else if(a==='mode'){S.mode=id;S.form=null;}
   else if(a==='mv')moveTo(id,+b.dataset.to);
   else if(a==='pconf')person().prios[+id].v=1;
-  else if(a==='pdis')person().prios.splice(+id,1);
+  else if(a==='pdis'){person().prios.splice(+id,1);S.pform=null;}
+  else if(a==='pedit'){S.pform={i:+id};S.form=null;}
+  else if(a==='padd'){S.pform={i:null};S.form=null;}
+  else if(a==='pcancel')S.pform=null;
+  else if(a==='pdel'){if(S.pform&&S.pform.i!=null)person().prios.splice(S.pform.i,1);S.pform=null;}
+  else if(a==='pup'||a==='pdown'){var pr=person().prios,pi=+id,pj=a==='pup'?pi-1:pi+1;if(pr[pj]){var tmp=pr[pi];pr[pi]=pr[pj];pr[pj]=tmp;}S.pform=null;}
   else if(a==='itog'){var iq=find(person(),id).o;iq.st=iq.st===2?0:2;}
   else if(a==='conv')S.conv=id;
   else if(a==='convx')S.conv=null;
@@ -573,7 +592,8 @@ document.addEventListener('click',function(e){
 });
 view.addEventListener('submit',function(e){
   e.preventDefault();
-  var f=e.target,side=f.dataset.side,p=person(),t=f.elements.t.value.trim(),k=f.elements.k.value,due=f.elements.due?f.elements.due.value:'',fm=S.form;
+  var f=e.target,side=f.dataset.side,p=person(),t=f.elements.t.value.trim(),k=f.elements.k?f.elements.k.value:'',due=f.elements.due?f.elements.due.value:'',fm=S.form;
+  if(side==='prio'){if(!t||!S.pform)return;var ps=p.prios;if(S.pform.i==null){if(ps.length<MAXPRIO)ps.push({t:t,src:'Added manually',v:1});}else{ps[S.pform.i].t=t;ps[S.pform.i].v=1;}S.pform=null;render();return;}
   if(!t||!fm)return;
   if(side==='issue'){if(fm.id){var q=find(p,fm.id).o;q.t=t;q.by=k;q.v=1;}else p.issues.push({id:uid(),t:t,by:k,src:'Added manually',v:1,st:0});S.form=null;render();return;}
   if(side==='dec'){
@@ -590,7 +610,7 @@ view.addEventListener('dragstart',function(e){var c=e.target.closest&&e.target.c
 view.addEventListener('dragover',function(e){var cell=e.target.closest&&e.target.closest('.kc');if(!drag||!cell||cell.dataset.row!==drag.row)return;e.preventDefault();[].forEach.call(view.querySelectorAll('.kc.over'),function(n){n.classList.remove('over');});cell.classList.add('over');});
 view.addEventListener('drop',function(e){var cell=e.target.closest&&e.target.closest('.kc');if(!drag||!cell||cell.dataset.row!==drag.row)return;e.preventDefault();moveTo(drag.id,+cell.dataset.st);drag=null;render();});
 view.addEventListener('dragend',function(){drag=null;[].forEach.call(view.querySelectorAll('.over,.dragging'),function(n){n.classList.remove('over','dragging');});});
-view.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.form){S.form=null;render();}});
+view.addEventListener('keydown',function(e){if(e.key==='Escape'&&(S.form||S.pform)){S.form=null;S.pform=null;render();}});
 view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
 render();
 var caldlg=document.getElementById('caldlg');
