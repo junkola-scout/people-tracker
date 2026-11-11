@@ -148,6 +148,42 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .pinbig{height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;padding:0 12px;font-size:13px;font-weight:600;display:flex;gap:6px;align-items:center}
 .pinbig.on{border-color:var(--accent);color:var(--accent)}
 .pinhint{padding:22px;margin-bottom:0}
+button.eng{width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line2);font-size:14px;min-height:48px}
+button.eng:hover{background:#202227}
+.chev{flex:none;color:var(--muted);font-size:18px;line-height:1}
+dialog{width:min(520px,calc(100vw - 32px));padding:0;background:var(--panel);color:#7fd4c1;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.dhead{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:8px 8px 0 20px}
+.dmeta{font-size:12px;opacity:.85}
+dialog h2{margin:4px 0 0;font-size:18px;font-weight:600;line-height:1.3}
+.dclose{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:8px;color:#7fd4c1}
+.dclose:hover{background:var(--line2)}
+.dnote{padding:0 20px 22px}
+.dlabel{font-size:11px;font-weight:700;letter-spacing:.08em}
+.dnote p{margin:4px 0 0;font-size:15px;line-height:1.5}
+.rangebtn{height:36px;border-radius:8px;border:1px solid var(--line);background:transparent;padding:0 12px;font-size:12px;font-weight:600;display:flex;gap:8px;align-items:center;color:var(--text)}
+.rangebtn:hover{border-color:var(--muted)}
+#caldlg{color:var(--text);width:min(360px,calc(100vw - 32px))}
+#caldlg .dclose{color:var(--mid)}
+.chead{padding:10px 8px 10px 20px;border-bottom:1px solid var(--line)}
+.chead h2{margin:0;font-size:15px}
+#calbody{padding:14px 16px 16px}
+.cnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:14px}
+.cbtn{width:40px;height:40px;border-radius:8px;background:transparent;border:1px solid var(--line);font-size:18px;line-height:1}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cdow{font-size:11px;color:var(--muted);text-align:center;padding:6px 0}
+.cday{position:relative;height:42px;border-radius:8px;background:transparent;border:0;font-size:13px}
+.cday:hover{background:var(--line2)}
+.cday:disabled{color:#6b6d76;cursor:not-allowed;background:transparent}
+.cday.in{background:rgba(245,177,108,.16);border-radius:0}
+.cday.end{background:var(--accent);color:#151619;font-weight:700;border-radius:8px}
+.cday.today:not(.end){box-shadow:inset 0 0 0 1px var(--muted)}
+.cday i,.cleg i{position:absolute;left:50%;bottom:5px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#7fd4c1}
+.cday.end i{background:#151619}
+.chint{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;font-size:12px;color:var(--mid);margin:12px 0}
+.cleg{color:var(--muted)}.cleg i{position:static;display:inline-block;margin:0 4px 2px 0}
+.cfoot{display:flex;gap:8px;align-items:center}
+.fbtn:disabled{opacity:.4;cursor:not-allowed}
 .hleft{display:flex;align-items:center;gap:10px;min-width:0}
 .burger,.navclose{display:none;flex:none;width:44px;height:44px;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);border-radius:8px}
 .navclose{position:absolute;top:12px;right:10px;border-color:transparent}
@@ -165,6 +201,16 @@ nav.open{transform:none;visibility:visible;box-shadow:0 0 40px rgba(0,0,0,.5)}
 </head>
 <body>
 <div class="scrim" id="scrim"></div>
+<dialog id="caldlg" aria-labelledby="caltitle">
+  <div class="dhead chead"><h2 id="caltitle">Engagement date range</h2>
+    <button class="dclose" data-cal="cancel" aria-label="Close"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div>
+  <div id="calbody"></div>
+</dialog>
+<dialog id="engdlg" aria-labelledby="englabel">
+  <div class="dhead"><div class="dlabel" id="englabel">NOTE</div>
+    <button class="dclose" id="engclose" aria-label="Close"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div>
+  <div class="dnote"><p>These rows will link to the actual engagement record, so photos, files, transcriptions, attendee list, and other assets can be accessed.</p></div>
+</dialog>
 <div class="app">
   <nav id="nav" aria-label="Workspace">
     <button class="navclose" id="navclose" aria-label="Close menu"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
@@ -269,6 +315,34 @@ DATA.forEach(function(p){
 });
 var S={sel:null,filter:'all',q:'',form:null,mode:'list'};
 var MAXPIN=6;
+var DEFRANGE={from:'2026-10-29',to:TODAY};
+S.range={from:DEFRANGE.from,to:DEFRANGE.to};
+var CALSVG='<svg aria-hidden="true" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>';
+function engPanel(p){
+  var r=S.range,first=p.name.split(' ')[0];
+  var rows=p.eng.map(function(e,i){return {e:e,i:i,d:iso(e[0])};}).filter(function(x){return x.d>=r.from&&x.d<=r.to;});
+  return '<section class="panel"><div class="phd"><h2>Engagements</h2><button class="rangebtn" data-act="cal" aria-haspopup="dialog" aria-label="Change date range, currently '+fmt(r.from)+' to '+fmt(r.to)+'">'+CALSVG+fmt(r.from)+' – '+fmt(r.to)+'</button></div>'+
+    (rows.map(function(x){var e=x.e;return '<button class="eng" data-act="eng" data-id="'+x.i+'" aria-haspopup="dialog"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span><span class="chev" aria-hidden="true">›</span></button>';}).join('')||'<div class="none">No engagements with '+esc(first)+' in this date range.</div>')+'</section>';
+}
+var MONFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var cal={y:2026,m:10,a:null,b:null};
+function pad(n){return (n<10?'0':'')+n;}
+function renderCal(focusD){
+  var start=new Date(cal.y,cal.m,1).getDay(),days=new Date(cal.y,cal.m+1,0).getDate(),has={},p=person();
+  if(p)p.eng.forEach(function(e){has[iso(e[0])]=1;});
+  var lo=cal.a,hi=cal.b||cal.a;
+  var h='<div class="cnav"><button class="cbtn" data-cal="prev" aria-label="Previous month">‹</button><b>'+MONFULL[cal.m]+' '+cal.y+'</b><button class="cbtn" data-cal="next" aria-label="Next month">›</button></div><div class="cgrid">'+['Su','Mo','Tu','We','Th','Fr','Sa'].map(function(d){return '<span class="cdow">'+d+'</span>';}).join('');
+  for(var i=0;i<start;i++)h+='<span></span>';
+  for(var d=1;d<=days;d++){
+    var k=cal.y+'-'+pad(cal.m+1)+'-'+pad(d),inr=lo&&k>=lo&&k<=hi,end=k===lo||k===hi;
+    h+='<button class="cday'+(inr?' in':'')+(end?' end':'')+(k===TODAY?' today':'')+'" data-cal="day" data-d="'+k+'" aria-pressed="'+!!inr+'" aria-label="'+MONFULL[cal.m]+' '+d+(has[k]?', has an engagement':'')+'"'+(k>TODAY?' disabled':'')+'>'+d+(has[k]?'<i></i>':'')+'</button>';
+  }
+  h+='</div><div class="chint">'+(cal.b?fmt(cal.a)+' – '+fmt(cal.b):(cal.a?'Start: '+fmt(cal.a)+'. Now pick an end date.':'Pick a start date.'))+'<span class="cleg"><i></i> has an engagement</span></div>'+
+    '<div class="cfoot"><button class="fbtn" data-cal="reset">Last 2 weeks</button><span style="flex:1"></span><button class="fbtn" data-cal="cancel">Cancel</button><button class="fbtn pri" data-cal="apply"'+(cal.a?'':' disabled')+'>Apply</button></div>';
+  document.getElementById('calbody').innerHTML=h;
+  if(focusD){var fb=document.querySelector('.cday[data-d="'+focusD+'"]');if(fb)fb.focus();}
+}
+function openCal(){cal.a=S.range.from;cal.b=S.range.to;var t=S.range.to.split('-');cal.y=+t[0];cal.m=+t[1]-1;renderCal();document.getElementById('caldlg').showModal();}
 DATA.forEach(function(p,i){p.pin=i===0?1:0;});
 function pinN(){return DATA.filter(function(p){return p.pin;}).length;}
 var PINSVG='<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"><path d="M6 2h4l-.5 4L12 8.5V10H4V8.5L6.5 6 6 2z"/><path d="M8 10v4" fill="none"/></svg>';
@@ -394,11 +468,11 @@ function detailHTML(x){
   return '<div><button class="back" data-act="back">← All people</button></div>'+
     '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div>'+pinCtl(x)+'</div>'+
     '<div class="facts"><span>LAST ENGAGEMENT<b>'+esc(p.last)+'</b></span><span>NEXT MEETING<b>'+esc(p.next)+'</b></span></div></div>'+
-    '<div class="brief">'+esc(x.brief)+'</div>'+toggleHTML()+(S.mode==='board'?boardHTML(x)+'<div class="cols"><section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>':
+    '<div class="brief">'+esc(x.brief)+'</div>'+toggleHTML()+(S.mode==='board'?boardHTML(x)+'<div class="cols">'+engPanel(p)+'</div>':
     '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+addBar('owe','Add something you owe '+f)+'</section>'+
     '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+addBar('owed','Add something '+f+' owes you')+'</section></div>'+
     '<div class="cols">'+
-    '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>');
+    ''+engPanel(p)+'</div>');
 }
 function render(keepFocus){
   var all=build();
@@ -410,6 +484,8 @@ function render(keepFocus){
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-act]');if(!b)return;
   var a=b.dataset.act,id=b.dataset.id;
+  if(a==='cal'){openCal();return;}
+  if(a==='eng'){document.getElementById('engdlg').showModal();return;}
   if(a==='open'){S.sel=id;S.form=null;window.scrollTo(0,0);}
   else if(a==='back'){S.sel=null;S.form=null;}
   else if(a==='filter')S.filter=id;
@@ -445,6 +521,21 @@ view.addEventListener('dragend',function(){drag=null;[].forEach.call(view.queryS
 view.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.form){S.form=null;render();}});
 view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
 render();
+var caldlg=document.getElementById('caldlg');
+caldlg.addEventListener('click',function(e){
+  if(e.target===caldlg){caldlg.close();return;}
+  var b=e.target.closest('[data-cal]');if(!b)return;var c=b.dataset.cal,d=b.dataset.d;
+  if(c==='cancel'){caldlg.close();return;}
+  if(c==='apply'){S.range={from:cal.a,to:cal.b||cal.a};caldlg.close();render();return;}
+  if(c==='prev'){cal.m--;if(cal.m<0){cal.m=11;cal.y--;}}
+  else if(c==='next'){cal.m++;if(cal.m>11){cal.m=0;cal.y++;}}
+  else if(c==='reset'){cal.a=DEFRANGE.from;cal.b=DEFRANGE.to;cal.y=2026;cal.m=10;}
+  else if(c==='day'){if(!cal.a||cal.b){cal.a=d;cal.b=null;}else if(d<cal.a){cal.b=cal.a;cal.a=d;}else cal.b=d;}
+  renderCal(d);
+});
+var engdlg=document.getElementById('engdlg');
+document.getElementById('engclose').addEventListener('click',function(){engdlg.close();});
+engdlg.addEventListener('click',function(e){if(e.target===engdlg)engdlg.close();});
 var nav=document.getElementById('nav'),burger=document.getElementById('burger'),scrim=document.getElementById('scrim');
 function menu(open){nav.classList.toggle('open',open);scrim.classList.toggle('open',open);burger.setAttribute('aria-expanded',open);if(open)nav.querySelector('.navitem').focus();else if(document.activeElement&&nav.contains(document.activeElement))burger.focus();}
 burger.addEventListener('click',function(){menu(!nav.classList.contains('open'));});
