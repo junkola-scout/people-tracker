@@ -92,6 +92,20 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .nudge{flex:none;height:36px;border-radius:8px;font-size:12px;font-weight:600;padding:0 12px;background:transparent;border:1px solid var(--line)}
 .nudge.on{background:rgba(111,207,151,.12);border-color:var(--green);color:var(--green)}
 .none{padding:24px 16px;color:var(--mid);font-size:13px}
+.ebtn{flex:none;height:36px;border-radius:8px;font-size:12px;font-weight:600;padding:0 10px;background:transparent;border:1px solid transparent;color:var(--mid)}
+.ebtn:hover{border-color:var(--line);color:var(--text)}
+.addbar{padding:8px 10px;border-top:1px solid var(--line2)}
+.item:last-child{border-bottom:1px solid var(--line2)}
+.item+.addbar,.edit+.addbar{border-top:0}
+.add{width:100%;text-align:left;height:40px;border-radius:8px;background:transparent;border:1px dashed var(--line);color:var(--mid);font-size:13px;padding:0 12px}
+.add:hover{color:var(--text);border-color:var(--muted)}
+.edit{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line2);background:#202227}
+.frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fin{height:40px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:0 10px;color-scheme:dark}
+.ft{width:100%;font-size:14px}
+.fbtn{height:36px;border-radius:8px;font-size:12px;font-weight:700;padding:0 12px;background:transparent;border:1px solid var(--line)}
+.fbtn.pri{background:var(--accent);border-color:var(--accent);color:#151619}
+.fbtn.del{color:var(--red)}
 .eng{display:flex;gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line2)}
 .eng:last-child{border-bottom:0}
 .eng .w{flex:none;width:56px;font-size:12px;color:var(--muted)}.eng .t{flex:1;min-width:0;line-height:1.4}.eng .k{flex:none;font-size:12px;color:var(--muted)}
@@ -193,21 +207,50 @@ var DATA=[
 {id:'sw',name:'Sam Whitaker',role:'IT Administrator',dept:'Operations',hue:230,last:'Thu Oct 22',next:'Not scheduled',
  owe:[],owed:[],pending:[],decisions:[],eng:[['Oct 22','Laptop refresh schedule',GL]]}
 ];
-var S={sel:null,filter:'all',q:'',done:{},nudged:{}};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],TODAY='2026-11-11',N=0;
+function iso(s){var m=s.split(' '),mi=MON.indexOf(m[0])+1,d=+m[1];return '2026-'+(mi<10?'0':'')+mi+'-'+(d<10?'0':'')+d;}
+function fmt(d){if(!d)return '';var a=d.split('-');return MON[+a[1]-1]+' '+(+a[2]);}
+function uid(){return 'i'+(N++);}
+DATA.forEach(function(p){
+  ['owe','owed'].forEach(function(k){p[k]=p[k].map(function(r){return {id:uid(),k:r[0],t:r[1],due:iso(r[2]),src:r[4],v:r[5],done:false,nudged:false};});});
+  ['pending','decisions'].forEach(function(k){p[k]=p[k].map(function(d){return {id:uid(),t:d[0],due:iso(d[1]),src:d[2]};});});
+});
+var S={sel:null,filter:'all',q:'',form:null};
+function person(){return DATA.filter(function(p){return p.id===S.sel;})[0];}
+function find(p,id){var lists=['owe','owed','pending','decisions'];for(var i=0;i<lists.length;i++){var arr=p[lists[i]];for(var j=0;j<arr.length;j++)if(arr[j].id===id)return {list:lists[i],arr:arr,idx:j,o:arr[j]};}return null;}
+function formHTML(side,o,list){
+  var dec=side==='dec';
+  var opts=dec?[['decisions','Decided'],['pending','Awaiting decision']]:[['Task','Task'],['Follow-up','Follow-up'],['Asset','Asset']];
+  var cur=o?(dec?list:o.k):opts[0][0];
+  return '<form class="edit" data-side="'+side+'"><input name="t" class="fin ft" aria-label="Description" placeholder="'+(dec?'What was decided, or what needs deciding?':'What needs to be delivered?')+'" value="'+esc(o?o.t:'')+'" required>'+
+    '<div class="frow"><select name="k" class="fin" aria-label="'+(dec?'Status':'Type')+'">'+opts.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===cur?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
+    '<input name="due" type="date" class="fin" aria-label="'+(dec?'Date':'Due date')+'" value="'+(o&&o.due?o.due:'')+'"><span style="flex:1"></span>'+
+    (o?'<button type="button" class="fbtn del" data-act="del">Delete</button>':'')+'<button type="button" class="fbtn" data-act="cancel">Cancel</button><button type="submit" class="fbtn pri">Save</button></div></form>';
+}
+function addBar(side,label){
+  if(S.form&&S.form.side===side&&!S.form.id)return formHTML(side,null);
+  return '<div class="addbar"><button class="add" data-act="add" data-side="'+side+'">+ '+label+'</button></div>';
+}
+function editBtn(side,o){return '<button class="ebtn" data-act="edit" data-side="'+side+'" data-id="'+o.id+'" aria-label="Edit: '+esc(o.t)+'">Edit</button>';}
+function decHTML(d,list){
+  if(S.form&&S.form.id===d.id)return formHTML('dec',d,list);
+  var wait=list==='pending';
+  return '<div class="item"><div class="body"><span class="ttl">'+esc(d.t)+'</span><span class="metarow"><span class="chip '+(wait?'c-wait':'c-dec')+'">'+(wait?'Awaiting decision':'Decided')+'</span><span>'+(wait?'asked ':'')+fmt(d.due)+'</span><span>'+esc(d.src)+'</span></span></div>'+editBtn('dec',d)+'</div>';
+}
 var view=document.getElementById('view');
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function plural(n,w){return n+' '+w+(n===1?'':'s');}
 function build(){
   return DATA.map(function(p){
     var first=p.name.split(' ')[0];
-    function it(r,id){var done=!!S.done[id];return {id:id,k:r[0],t:r[1],due:r[2],od:!!r[3]&&!done,src:r[4],v:r[5],done:done,nudged:!!S.nudged[id]};}
-    var owe=p.owe.map(function(r,i){return it(r,p.id+'o'+i);}),owed=p.owed.map(function(r,i){return it(r,p.id+'d'+i);});
+    function it(o){return {id:o.id,k:o.k,t:o.t,due:fmt(o.due),od:!!o.due&&o.due<TODAY&&!o.done,src:o.src,v:o.v,done:o.done,nudged:o.nudged,o:o};}
+    var owe=p.owe.map(it),owed=p.owed.map(it);
     var oo=owe.filter(function(x){return !x.done;}),dd=owed.filter(function(x){return !x.done;});
     var oweOd=oo.filter(function(x){return x.od;}),owedOd=dd.filter(function(x){return x.od;}).length;
     var tag,line,od=false;
     if(oweOd.length){tag='OVERDUE FROM YOU';line=oweOd[0].t;od=true;}
-    else if(oo.length){tag='YOU OWE · DUE '+oo[0].due.toUpperCase();line=oo[0].t;}
-    else if(dd.length){tag='WAITING ON '+first.toUpperCase()+' · '+dd[0].due.toUpperCase();line=dd[0].t;}
+    else if(oo.length){tag='YOU OWE'+(oo[0].due?' · DUE '+oo[0].due.toUpperCase():'');line=oo[0].t;}
+    else if(dd.length){tag='WAITING ON '+first.toUpperCase()+(dd[0].due?' · '+dd[0].due.toUpperCase():'');line=dd[0].t;}
     else{tag='ALL CLEAR';line='Nothing open between you.';}
     return {p:p,first:first,owe:owe,owed:owed,oweN:oo.length,owedN:dd.length,odN:oweOd.length+owedOd,tag:tag,line:line,tagOd:od,
       initials:p.name.split(' ').map(function(w){return w[0];}).join(''),
@@ -239,41 +282,60 @@ function listHTML(all){
   return h;
 }
 function itemHTML(it,mine){
+  if(S.form&&S.form.id===it.id)return formHTML(mine?'owe':'owed',it.o);
   var label=(it.done?'Reopen: ':(mine?'Mark delivered: ':'Mark received: '))+it.t;
-  var due=it.done?'<span class="due ok">Done</span>':(it.od?'<span class="due od">Overdue · was due '+it.due+'</span>':'<span class="due">Due '+it.due+'</span>');
+  var due=it.done?'<span class="due ok">Done</span>':(it.od?'<span class="due od">Overdue · was due '+it.due+'</span>':(it.due?'<span class="due">Due '+it.due+'</span>':'<span class="due">No due date</span>'));
   return '<div class="item'+(it.done?' done':'')+'"><button class="chk" data-act="toggle" data-id="'+it.id+'" aria-pressed="'+it.done+'" aria-label="'+esc(label)+'"><span class="box">'+(it.done?'<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#151619" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>':'')+'</span></button>'+
     '<div class="body"><span class="ttl">'+esc(it.t)+'</span><span class="metarow"><span class="chip c-'+it.k+'">'+it.k+'</span>'+due+'<span>'+esc(it.src)+'</span><span class="'+(it.v?'hv':'ai')+'">● '+(it.v?'Human verified':'AI suggested')+'</span></span></div>'+
-    (mine?'':'<button class="nudge'+(it.nudged?' on':'')+'" data-act="nudge" data-id="'+it.id+'">'+(it.nudged?'Nudge drafted':'Draft nudge')+'</button>')+'</div>';
+    editBtn(mine?'owe':'owed',it)+(mine?'':'<button class="nudge'+(it.nudged?' on':'')+'" data-act="nudge" data-id="'+it.id+'">'+(it.nudged?'Nudge drafted':'Draft nudge')+'</button>')+'</div>';
 }
 function detailHTML(x){
   var p=x.p,f=esc(x.first);
-  var dec=p.pending.map(function(d){return '<div class="item"><div class="body"><span class="ttl">'+esc(d[0])+'</span><span class="metarow"><span class="chip c-wait">Awaiting decision</span><span>asked '+d[1]+'</span><span>'+d[2]+'</span></span></div></div>';}).join('')+
-    p.decisions.map(function(d){return '<div class="item"><div class="body"><span class="ttl">'+esc(d[0])+'</span><span class="metarow"><span class="chip c-dec">Decided</span><span>'+d[1]+'</span><span>'+d[2]+'</span></span></div></div>';}).join('');
+  var dec=p.pending.map(function(d){return decHTML(d,'pending');}).join('')+p.decisions.map(function(d){return decHTML(d,'decisions');}).join('');
   return '<div><button class="back" data-act="back">← All people</button></div>'+
     '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div></div>'+
     '<div class="facts"><span>LAST ENGAGEMENT<b>'+esc(p.last)+'</b></span><span>NEXT MEETING<b>'+esc(p.next)+'</b></span></div></div>'+
     '<div class="brief">'+esc(x.brief)+'</div>'+
-    '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+'</section>'+
-    '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+'</section></div>'+
-    '<div class="cols"><section class="panel"><div class="phd"><h2>Decisions</h2></div>'+(dec||'<div class="none">No decisions captured yet.</div>')+'</section>'+
+    '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+addBar('owe','Add something you owe '+f)+'</section>'+
+    '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+addBar('owed','Add something '+f+' owes you')+'</section></div>'+
+    '<div class="cols"><section class="panel"><div class="phd"><h2>Decisions</h2></div>'+(dec||'<div class="none">No decisions captured yet.</div>')+addBar('dec','Add a decision')+'</section>'+
     '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>';
 }
 function render(keepFocus){
   var all=build();
   var sel=S.sel&&all.filter(function(x){return x.p.id===S.sel;})[0];
   view.innerHTML=sel?detailHTML(sel):listHTML(all);
+  var ft=view.querySelector('.edit .ft');if(ft){ft.focus();ft.setSelectionRange(ft.value.length,ft.value.length);}
   if(keepFocus){var q=document.getElementById('q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}}
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-act]');if(!b)return;
   var a=b.dataset.act,id=b.dataset.id;
-  if(a==='open'){S.sel=id;window.scrollTo(0,0);}
-  else if(a==='back')S.sel=null;
+  if(a==='open'){S.sel=id;S.form=null;window.scrollTo(0,0);}
+  else if(a==='back'){S.sel=null;S.form=null;}
   else if(a==='filter')S.filter=id;
-  else if(a==='toggle')S.done[id]=!S.done[id];
-  else if(a==='nudge')S.nudged[id]=!S.nudged[id];
+  else if(a==='toggle'){var x=find(person(),id).o;x.done=!x.done;}
+  else if(a==='nudge'){var y=find(person(),id).o;y.nudged=!y.nudged;}
+  else if(a==='add')S.form={side:b.dataset.side,id:null};
+  else if(a==='edit')S.form={side:b.dataset.side,id:id};
+  else if(a==='cancel')S.form=null;
+  else if(a==='del'){var z=find(person(),S.form.id);if(z)z.arr.splice(z.idx,1);S.form=null;}
   render();
 });
+view.addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target,side=f.dataset.side,p=person(),t=f.elements.t.value.trim(),k=f.elements.k.value,due=f.elements.due.value,fm=S.form;
+  if(!t||!fm)return;
+  if(side==='dec'){
+    if(fm.id){var x=find(p,fm.id);x.o.t=t;if(due)x.o.due=due;if(x.list!==k){x.arr.splice(x.idx,1);p[k].unshift(x.o);}}
+    else p[k].unshift({id:uid(),t:t,due:due||TODAY,src:'Added manually'});
+  }else{
+    if(fm.id){var o=find(p,fm.id).o;o.t=t;o.k=k;o.due=due;o.v=1;}
+    else p[side].push({id:uid(),k:k,t:t,due:due,src:'Added manually',v:1,done:false,nudged:false});
+  }
+  S.form=null;render();
+});
+view.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.form){S.form=null;render();}});
 view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
 render();
 })();
