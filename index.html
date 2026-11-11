@@ -106,6 +106,27 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .fbtn{height:36px;border-radius:8px;font-size:12px;font-weight:700;padding:0 12px;background:transparent;border:1px solid var(--line)}
 .fbtn.pri{background:var(--accent);border-color:var(--accent);color:#151619}
 .fbtn.del{color:var(--red)}
+.seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.segb{height:40px;padding:0 16px;font-size:13px;background:transparent;border:0;color:var(--mid)}
+.segb.on{background:var(--line2);color:var(--text);font-weight:700}
+.kb{display:grid;grid-template-columns:170px repeat(3,minmax(0,1fr));min-width:860px}
+.kh{padding:12px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--line)}
+.kh b{color:var(--text);margin-left:4px}
+.kl{padding:16px 14px;display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:700;border-top:1px solid var(--line2)}
+.kl small{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}
+.kdot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.kc{padding:12px 10px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line2);border-left:1px solid var(--line2);min-height:96px}
+.kh+.kl,.kh+.kl~.kl:nth-of-type(-n+0){border-top:0}
+.kcard{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.kcard .ttl{font-size:13px}
+.kcard{cursor:grab}.kcard.dragging{opacity:.4}
+.kc.over{background:rgba(245,177,108,.08);outline:1px dashed var(--accent);outline-offset:-4px}
+.kmv{display:flex;justify-content:space-between;gap:6px;margin-top:2px}
+.kbtn{height:30px;border-radius:6px;font-size:11px;font-weight:600;padding:0 8px;background:transparent;border:1px solid var(--line2);color:var(--mid)}
+.kbtn:hover{border-color:var(--muted);color:var(--text)}
+.kcard.done{opacity:.75}
+.ksrc{font-size:11px;color:var(--muted)}
+.kempty{font-size:12px;color:var(--muted);padding:6px 4px}
 .eng{display:flex;gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line2)}
 .eng:last-child{border-bottom:0}
 .eng .w{flex:none;width:56px;font-size:12px;color:var(--muted)}.eng .t{flex:1;min-width:0;line-height:1.4}.eng .k{flex:none;font-size:12px;color:var(--muted)}
@@ -215,7 +236,40 @@ DATA.forEach(function(p){
   ['owe','owed'].forEach(function(k){p[k]=p[k].map(function(r){return {id:uid(),k:r[0],t:r[1],due:iso(r[2]),src:r[4],v:r[5],done:false,nudged:false};});});
   ['pending','decisions'].forEach(function(k){p[k]=p[k].map(function(d){return {id:uid(),t:d[0],due:iso(d[1]),src:d[2]};});});
 });
-var S={sel:null,filter:'all',q:'',form:null};
+var S={sel:null,filter:'all',q:'',form:null,mode:'list'};
+DATA[0].owe[1].st=1;DATA[0].owed[0].st=1;DATA[0].owe.push({id:uid(),k:'Asset',t:'Signed test-stand safety checklist',due:'2026-11-06',src:'Gmail · Nov 4',v:1,done:true,nudged:false});DATA[0].owed.push({id:uid(),k:'Follow-up',t:'Confirm rotor hub drawing release date',due:'2026-11-07',src:'Google Meet · Nov 5',v:1,done:true,nudged:false});DATA[0].pending.push({id:uid(),t:'Pick the telemetry data format for bench tests',due:'2026-11-10',src:'Google Meet',st:1});
+var COLS=['Signals','In Progress','Handled'];
+function toggleHTML(){
+  return '<div class="seg" role="group" aria-label="View">'+[['list','List'],['board','Kanban']].map(function(m){var on=S.mode===m[0];return '<button class="segb'+(on?' on':'')+'" aria-pressed="'+on+'" data-act="mode" data-id="'+m[0]+'">'+m[1]+'</button>';}).join('')+'</div>';
+}
+function arrows(id,st,t){
+  return '<span class="kmv">'+(st>0?'<button class="kbtn" data-act="mv" data-id="'+id+'" data-to="'+(st-1)+'" aria-label="Move to '+COLS[st-1]+': '+esc(t)+'">← '+COLS[st-1]+'</button>':'<span></span>')+(st<2?'<button class="kbtn" data-act="mv" data-id="'+id+'" data-to="'+(st+1)+'" aria-label="Move to '+COLS[st+1]+': '+esc(t)+'">'+COLS[st+1]+' →</button>':'')+'</span>';
+}
+function moveTo(id,to){
+  var p=person(),x=find(p,id);if(!x)return;
+  if(x.list==='owe'||x.list==='owed'){x.o.st=to;x.o.done=to===2;return;}
+  var dest=to===2?'decisions':'pending';
+  if(to===2)delete x.o.st;else x.o.st=to;
+  if(x.list!==dest){x.arr.splice(x.idx,1);p[dest].unshift(x.o);}
+}
+function kcard(it){
+  var due=it.st===2?'<span class="due ok">Done</span>':(it.od?'<span class="due od">Overdue · '+it.due+'</span>':(it.due?'<span class="due">Due '+it.due+'</span>':''));
+  return '<div class="kcard'+(it.st===2?' done':'')+'" draggable="true" data-card="'+it.id+'"><span class="ttl">'+esc(it.t)+'</span><span class="metarow"><span class="chip c-'+it.k+'">'+it.k+'</span>'+due+'<span class="'+(it.v?'hv':'ai')+'" title="'+(it.v?'Human verified':'AI suggested')+'">●</span></span><span class="ksrc">'+esc(it.src)+'</span>'+arrows(it.id,it.st,it.t)+'</div>';
+}
+function kdec(d,st){
+  return '<div class="kcard" draggable="true" data-card="'+d.id+'"><span class="ttl">'+esc(d.t)+'</span><span class="metarow"><span class="chip '+(st===2?'c-dec':'c-wait')+'">'+(st===2?'Decided':'Awaiting decision')+'</span><span class="due">'+(st===2?'':'asked ')+fmt(d.due)+'</span></span><span class="ksrc">'+esc(d.src)+'</span>'+arrows(d.id,st,d.t)+'</div>';
+}
+function boardHTML(x){
+  var p=x.p;
+  var decs=p.pending.map(function(d){var st=d.st||0;return {st:st,h:kdec(d,st)};}).concat(p.decisions.map(function(d){return {st:2,h:kdec(d,2)};}));
+  var rows=[['What I Owe','var(--accent)',x.owe.map(function(i){return {st:i.st,h:kcard(i)};})],['What Is Owed to Me','var(--blue)',x.owed.map(function(i){return {st:i.st,h:kcard(i)};})],['Decisions','#7fd4c1',decs]];
+  var h='<div class="tablewrap kwrap"><div class="kb"><div class="kh"></div>'+COLS.map(function(c,ci){var n=rows.reduce(function(a,r){return a+r[2].filter(function(k){return k.st===ci;}).length;},0);return '<div class="kh">'+c.toUpperCase()+' <b>'+n+'</b></div>';}).join('');
+  rows.forEach(function(r,ri){
+    h+='<div class="kl" data-rowlabel="'+ri+'"><span class="kdot" style="background:'+r[1]+'"></span><span>'+r[0]+'<small>'+r[2].length+' total</small></span></div>';
+    for(var c=0;c<3;c++){var cs=r[2].filter(function(k){return k.st===c;});h+='<div class="kc" data-row="'+ri+'" data-st="'+c+'">'+(cs.map(function(k){return k.h;}).join('')||'<span class="kempty">Nothing here</span>')+'</div>';}
+  });
+  return h+'</div></div>';
+}
 function person(){return DATA.filter(function(p){return p.id===S.sel;})[0];}
 function find(p,id){var lists=['owe','owed','pending','decisions'];for(var i=0;i<lists.length;i++){var arr=p[lists[i]];for(var j=0;j<arr.length;j++)if(arr[j].id===id)return {list:lists[i],arr:arr,idx:j,o:arr[j]};}return null;}
 function formHTML(side,o,list){
@@ -243,7 +297,7 @@ function plural(n,w){return n+' '+w+(n===1?'':'s');}
 function build(){
   return DATA.map(function(p){
     var first=p.name.split(' ')[0];
-    function it(o){return {id:o.id,k:o.k,t:o.t,due:fmt(o.due),od:!!o.due&&o.due<TODAY&&!o.done,src:o.src,v:o.v,done:o.done,nudged:o.nudged,o:o};}
+    function it(o){return {id:o.id,k:o.k,t:o.t,due:fmt(o.due),st:o.done?2:(o.st||0),od:!!o.due&&o.due<TODAY&&!o.done,src:o.src,v:o.v,done:o.done,nudged:o.nudged,o:o};}
     var owe=p.owe.map(it),owed=p.owed.map(it);
     var oo=owe.filter(function(x){return !x.done;}),dd=owed.filter(function(x){return !x.done;});
     var oweOd=oo.filter(function(x){return x.od;}),owedOd=dd.filter(function(x){return x.od;}).length;
@@ -295,11 +349,11 @@ function detailHTML(x){
   return '<div><button class="back" data-act="back">← All people</button></div>'+
     '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div></div>'+
     '<div class="facts"><span>LAST ENGAGEMENT<b>'+esc(p.last)+'</b></span><span>NEXT MEETING<b>'+esc(p.next)+'</b></span></div></div>'+
-    '<div class="brief">'+esc(x.brief)+'</div>'+
+    '<div class="brief">'+esc(x.brief)+'</div>'+toggleHTML()+(S.mode==='board'?boardHTML(x)+'<div class="cols"><section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>':
     '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+addBar('owe','Add something you owe '+f)+'</section>'+
     '<section class="panel"><div class="phd"><h2>'+f+' owes you</h2><span style="color:var(--blue)">'+x.owedN+' open</span></div>'+(x.owed.map(function(i){return itemHTML(i,false);}).join('')||'<div class="none">Nothing outstanding to you.</div>')+addBar('owed','Add something '+f+' owes you')+'</section></div>'+
     '<div class="cols"><section class="panel"><div class="phd"><h2>Decisions</h2></div>'+(dec||'<div class="none">No decisions captured yet.</div>')+addBar('dec','Add a decision')+'</section>'+
-    '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>';
+    '<section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>');
 }
 function render(keepFocus){
   var all=build();
@@ -314,11 +368,13 @@ document.addEventListener('click',function(e){
   if(a==='open'){S.sel=id;S.form=null;window.scrollTo(0,0);}
   else if(a==='back'){S.sel=null;S.form=null;}
   else if(a==='filter')S.filter=id;
-  else if(a==='toggle'){var x=find(person(),id).o;x.done=!x.done;}
+  else if(a==='toggle'){var x=find(person(),id).o;x.done=!x.done;x.st=x.done?2:0;}
   else if(a==='nudge'){var y=find(person(),id).o;y.nudged=!y.nudged;}
   else if(a==='add')S.form={side:b.dataset.side,id:null};
   else if(a==='edit')S.form={side:b.dataset.side,id:id};
   else if(a==='cancel')S.form=null;
+  else if(a==='mode'){S.mode=id;S.form=null;}
+  else if(a==='mv')moveTo(id,+b.dataset.to);
   else if(a==='del'){var z=find(person(),S.form.id);if(z)z.arr.splice(z.idx,1);S.form=null;}
   render();
 });
@@ -335,6 +391,11 @@ view.addEventListener('submit',function(e){
   }
   S.form=null;render();
 });
+var drag=null;
+view.addEventListener('dragstart',function(e){var c=e.target.closest&&e.target.closest('[data-card]');if(!c)return;var cell=c.closest('.kc');drag={id:c.dataset.card,row:cell.dataset.row};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',drag.id);c.classList.add('dragging');});
+view.addEventListener('dragover',function(e){var cell=e.target.closest&&e.target.closest('.kc');if(!drag||!cell||cell.dataset.row!==drag.row)return;e.preventDefault();[].forEach.call(view.querySelectorAll('.kc.over'),function(n){n.classList.remove('over');});cell.classList.add('over');});
+view.addEventListener('drop',function(e){var cell=e.target.closest&&e.target.closest('.kc');if(!drag||!cell||cell.dataset.row!==drag.row)return;e.preventDefault();moveTo(drag.id,+cell.dataset.st);drag=null;render();});
+view.addEventListener('dragend',function(){drag=null;[].forEach.call(view.querySelectorAll('.over,.dragging'),function(n){n.classList.remove('over','dragging');});});
 view.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.form){S.form=null;render();}});
 view.addEventListener('input',function(e){if(e.target.id==='q'){S.q=e.target.value;render(true);}});
 render();
