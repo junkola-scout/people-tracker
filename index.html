@@ -131,6 +131,23 @@ h2.sec{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;color
 .eng:last-child{border-bottom:0}
 .eng .w{flex:none;width:56px;font-size:12px;color:var(--muted)}.eng .t{flex:1;min-width:0;line-height:1.4}.eng .k{flex:none;font-size:12px;color:var(--muted)}
 .note{font-size:11px;color:var(--muted);padding:0 8px;margin-top:auto;line-height:1.4}
+.pw{position:relative;min-width:0}
+.pw .card{width:100%;height:100%}
+.pw:not(.rw) .lastline{padding-right:34px;margin-top:auto}
+.pw:not(.rw) .pin{top:auto;bottom:3px;right:5px;width:36px;height:36px}
+.pin{position:absolute;top:6px;right:6px;z-index:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:8px;color:var(--muted)}
+.pin:hover{background:var(--line2);color:var(--text)}
+.pin.on{color:var(--accent)}
+.pin:disabled,.pinbig:disabled{opacity:.35;cursor:not-allowed}
+.rw .pin{top:50%;right:8px;transform:translateY(-50%)}
+.rw .row,.table .thead{padding-right:56px}
+.rw:last-child .row{border-bottom:0}
+.pc{color:var(--text);letter-spacing:0;margin-left:6px;font-size:12px;font-weight:700}
+.phead .id{flex-wrap:wrap}
+.pinctl{display:flex;align-items:center;gap:4px;margin-left:8px}
+.pinbig{height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;padding:0 12px;font-size:13px;font-weight:600;display:flex;gap:6px;align-items:center}
+.pinbig.on{border-color:var(--accent);color:var(--accent)}
+.pinhint{padding:22px;margin-bottom:0}
 .hleft{display:flex;align-items:center;gap:10px;min-width:0}
 .burger,.navclose{display:none;flex:none;width:44px;height:44px;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line);border-radius:8px}
 .navclose{position:absolute;top:12px;right:10px;border-color:transparent}
@@ -251,6 +268,20 @@ DATA.forEach(function(p){
   ['pending','decisions'].forEach(function(k){p[k]=p[k].map(function(d){return {id:uid(),t:d[0],due:iso(d[1]),src:d[2]};});});
 });
 var S={sel:null,filter:'all',q:'',form:null,mode:'list'};
+var MAXPIN=6;
+DATA.forEach(function(p,i){p.pin=i===0?1:0;});
+function pinN(){return DATA.filter(function(p){return p.pin;}).length;}
+var PINSVG='<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"><path d="M6 2h4l-.5 4L12 8.5V10H4V8.5L6.5 6 6 2z"/><path d="M8 10v4" fill="none"/></svg>';
+function pinIcon(on){return PINSVG.replace('<svg ','<svg fill="'+(on?'currentColor':'none')+'" ');}
+function pinBtn(x){
+  var on=!!x.p.pin,full=!on&&pinN()>=MAXPIN;
+  var label=on?'Unpin '+x.p.name:(full?MAXPIN+' of '+MAXPIN+' pins used. Unpin someone first.':'Pin '+x.p.name);
+  return '<button class="pin'+(on?' on':'')+'" data-act="pin" data-id="'+x.p.id+'" aria-pressed="'+on+'" aria-label="'+esc(label)+'" title="'+esc(label)+'"'+(full?' disabled':'')+'>'+pinIcon(on)+'</button>';
+}
+function pinCtl(x){
+  var on=!!x.p.pin,full=!on&&pinN()>=MAXPIN;
+  return '<div class="pinctl"><button class="pinbig'+(on?' on':'')+'" data-act="pin" data-id="'+x.p.id+'" aria-pressed="'+on+'"'+(full?' disabled title="Unpin someone first"':'')+'>'+pinIcon(on)+(on?'Pinned':'Pin')+'</button><span class="pc" aria-label="'+pinN()+' of '+MAXPIN+' pins used">'+pinN()+'/'+MAXPIN+'</span></div>';
+}
 DATA[0].owe[1].st=1;DATA[0].owed[0].st=1;DATA[0].owe.push({id:uid(),k:'Asset',t:'Signed test-stand safety checklist',due:'2026-11-06',src:'Gmail · Nov 4',v:1,done:true,nudged:false});DATA[0].owed.push({id:uid(),k:'Follow-up',t:'Confirm rotor hub drawing release date',due:'2026-11-07',src:'Google Meet · Nov 5',v:1,done:true,nudged:false});DATA[0].pending.push({id:uid(),t:'Pick the telemetry data format for bench tests',due:'2026-11-10',src:'Google Meet',st:1});
 var COLS=['Signals','In Progress','Handled'];
 function toggleHTML(){
@@ -338,14 +369,14 @@ function listHTML(all){
     '<div class="legend"><span><span class="hv">●</span> Human verified</span><span><span class="ai">●</span> AI suggested</span></div></div>';
   h+='<div class="controls"><input id="q" class="search" aria-label="Search people" placeholder="Search name, role or department" value="'+esc(S.q)+'">'+
     FILTERS.map(function(f){var on=S.filter===f[0];return '<button class="pill'+(on?' on':'')+'" aria-pressed="'+on+'" data-act="filter" data-id="'+f[0]+'">'+f[1]+'</button>';}).join('')+'</div>';
-  if(pinned.length){h+='<section><h2 class="sec">MOST ENGAGED</h2><div class="cards">'+pinned.map(function(x){
-    return '<button class="card" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
+  {h+='<section><h2 class="sec">PINNED <b class="pc">'+pinN()+'/'+MAXPIN+'</b></h2>'+(pinned.length?'':'<div class="empty pinhint">'+(pinN()?'No pinned people match this view.':'Pin up to '+MAXPIN+' people to keep them here. Use the pin button on any row.')+'</div>')+'<div class="cards">'+pinned.map(function(x){
+    return '<div class="pw">'+pinBtn(x)+'<button class="card" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
       '<span class="counts"><span class="count"><b style="color:var(--accent)">'+x.oweN+'</b><span>You owe</span></span><span class="count"><b style="color:var(--blue)">'+x.owedN+'</b><span>Owes you</span></span></span>'+
-      '<span class="next">'+nextBlock(x)+'</span><span class="lastline">Last: '+esc(x.p.last)+'</span></button>';}).join('')+'</div></section>';}
-  if(others.length){h+='<section><h2 class="sec">EVERYONE ELSE</h2><div class="tablewrap"><div class="table"><div class="grid thead"><span>PERSON</span><span>DEPARTMENT</span><span>YOU OWE</span><span>OWES YOU</span><span>LAST ENGAGEMENT</span><span>NEXT UP</span></div>'+others.map(function(x){
-    return '<button class="grid row" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av sm" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm" style="font-weight:600">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
+      '<span class="next">'+nextBlock(x)+'</span><span class="lastline">Last: '+esc(x.p.last)+'</span></button></div>';}).join('')+'</div></section>';}
+  if(others.length){h+='<section><h2 class="sec">'+(pinN()?'EVERYONE ELSE':'EVERYONE')+'</h2><div class="tablewrap"><div class="table"><div class="grid thead"><span>PERSON</span><span>DEPARTMENT</span><span>YOU OWE</span><span>OWES YOU</span><span>LAST ENGAGEMENT</span><span>NEXT UP</span></div>'+others.map(function(x){
+    return '<div class="pw rw">'+pinBtn(x)+'<button class="grid row" data-act="open" data-id="'+x.p.id+'"><span class="who"><span class="av sm" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><span><span class="nm" style="font-weight:600">'+esc(x.p.name)+'</span><span class="rl">'+esc(x.p.role)+'</span></span></span>'+
       '<span style="color:var(--mid)">'+esc(x.p.dept)+'</span><span style="font-weight:700;color:'+(x.oweN?'var(--accent)':'var(--muted)')+'">'+x.oweN+'</span><span style="font-weight:700;color:'+(x.owedN?'var(--blue)':'var(--muted)')+'">'+x.owedN+'</span>'+
-      '<span style="color:var(--mid)">'+esc(x.p.last)+'</span><span class="nx">'+nextBlock(x)+'</span></button>';}).join('')+'</div></div></section>';}
+      '<span style="color:var(--mid)">'+esc(x.p.last)+'</span><span class="nx">'+nextBlock(x)+'</span></button></div>';}).join('')+'</div></div></section>';}
   if(!vis.length)h+='<div class="empty">No people match this view.</div>';
   return h;
 }
@@ -361,7 +392,7 @@ function detailHTML(x){
   var p=x.p,f=esc(x.first);
   var dec=p.pending.map(function(d){return decHTML(d,'pending');}).join('')+p.decisions.map(function(d){return decHTML(d,'decisions');}).join('');
   return '<div><button class="back" data-act="back">← All people</button></div>'+
-    '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div></div>'+
+    '<div class="phead"><div class="id"><span class="av lg" style="'+x.av+'" aria-hidden="true">'+x.initials+'</span><div><h1>'+esc(p.name)+'</h1><div class="meta">'+esc(p.role)+' · '+esc(p.dept)+'</div></div>'+pinCtl(x)+'</div>'+
     '<div class="facts"><span>LAST ENGAGEMENT<b>'+esc(p.last)+'</b></span><span>NEXT MEETING<b>'+esc(p.next)+'</b></span></div></div>'+
     '<div class="brief">'+esc(x.brief)+'</div>'+toggleHTML()+(S.mode==='board'?boardHTML(x)+'<div class="cols"><section class="panel"><div class="phd"><h2>Recent engagements</h2></div>'+p.eng.map(function(e){return '<div class="eng"><span class="w">'+e[0]+'</span><span class="t">'+esc(e[1])+'</span><span class="k">'+e[2]+'</span></div>';}).join('')+'</section></div>':
     '<div class="cols"><section class="panel"><div class="phd"><h2>You owe '+f+'</h2><span style="color:var(--accent)">'+x.oweN+' open</span></div>'+(x.owe.map(function(i){return itemHTML(i,true);}).join('')||'<div class="none">Nothing outstanding from you.</div>')+addBar('owe','Add something you owe '+f)+'</section>'+
@@ -389,6 +420,7 @@ document.addEventListener('click',function(e){
   else if(a==='cancel')S.form=null;
   else if(a==='mode'){S.mode=id;S.form=null;}
   else if(a==='mv')moveTo(id,+b.dataset.to);
+  else if(a==='pin'){var pp=DATA.filter(function(q){return q.id===id;})[0];if(pp.pin)pp.pin=0;else if(pinN()<MAXPIN)pp.pin=1;}
   else if(a==='del'){var z=find(person(),S.form.id);if(z)z.arr.splice(z.idx,1);S.form=null;}
   render();
 });
